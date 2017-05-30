@@ -1,0 +1,550 @@
+Configuring
+###########
+
+/--div .[perex]
+System container is a DI container holding all the services and parameters needed for the application to run.
+Soon you will be able to:
+
+- create the system container
+- configure your application using NEON files
+- handle production and development modes
+- create and use your own container extensions
+\--
+
+*This page is still being prepared*
+
+System container is a static [Dependency Injection container |dependency-injection#toc-nette-di-container], that holds all services and parameters the application needs. This means not only services of the framework itself, but of each library you have decided to use. Take a look at an example of such [system container |configuring/systemcontainer].
+
+Developers learned that writing containers is a very tedious work. And it surely gets difficult to manage the application as it grows. Nette will do the work for you! With a simple configuration language we will describe services of the application and the framework will generate the PHP code. In all seriousness - the container linked above was generated this way as well.
+
+
+
+Configurator
+************
+
+The task of code generation is given to [Nette\Configurator|api:] class. The compilation process is triggered only once and its result is cached. For that reason we need to choose a directory for storing this code.
+
+/--php
+$configurator = new Nette\Configurator;
+$configurator->setTempDirectory(__DIR__ . '/../temp');
+\--
+
+Now we just add a path to the config file:
+
+/--php
+$configurator->addConfig(__DIR__ . '/config/config.neon');
+\--
+
+And getting container's instance is the simplest one:
+
+/--php
+// returns SystemContainer instance
+$container = $configurator->createContainer();
+\--
+
+
+Environment
+===========
+
+Configurator attempts to detect if the application is running on production or development server. As long as the client's IP address is 127.0.0.1, server will be considered as developmental. We cannot find out which environment is used, but it doesn't care since it is used only for loading section from the configuration file. We can define it by a second parameter of `addConfig()`.
+
+/--php
+$environment = Nette\Configurator::detectDebugMode('your ip address')
+	? $configurator::DEVELOPMENT
+	: $configurator::PRODUCTION;
+
+$configurator->addConfig(__DIR__ . '/config/config.neon', $environment);
+\--
+
+We can pass any string by `$environment`, not only the `production` or `development`. By this, we can ask `Configurator` to load any section of configuration file. But a right detection is up to you (for example by system variable `getenv('COMPUTERNAME')` or server's hostname `$_SERVER['SERVER_NAME']`).
+
+
+Development mode
+================
+
+A little bit different thing is an application running mode. We can access a `production` server as a `developer` and we want activate a Tracy debugger. The running mode is distinguished by the same principle as environment above, by client's IP address. We get the mode by [isDebugMode() |api:Nette\Configurator::isDebugMode()] and set the mode by [setDebugMode() |api:Nette\Configurator::setDebugMode()]. It is useful when we enable debugger by [enableTracy() |api:Nette\Configurator::enableTracy()] which must be placed after the mode setting.
+
+/--php
+// activates Tracy debugger for listed IP adresses
+$configurator->setDebugMode(['90.180.45.360', '90.180.45.361']);
+// or for anyone
+$configurator->setDebugMode(); // = TRUE
+// or for no one
+$configurator->setDebugMode($configurator::NONE); // = FALSE
+
+$configurator->enableTracy(__DIR__ . '/../log');
+\--
+
+
+Class Auto-loading
+==================
+
+To compile the container, `Configurator` needs to load all the classes mentioned in a configuration files. It is handy to have [auto-loading] at your disposal and Configurator offers a method creating an instance of `RobotLoader`. We  add only directories we wish to be indexed and activate the loader. Do not forget to place this code before calling `createContainer()`.
+
+/--php
+$configurator->createRobotLoader()
+	->addDirectory(__DIR__)
+	->register();
+\--
+
+
+
+Framework configuration
+***********************
+
+Configuration is usually written in NEON format. Have fun trying out the syntax at http://ne-on.org.
+Many features of Nette Framework can be set up in configuration file.
+
+
+HTTP proxies
+============
+
+You can define your http proxy, so that HTTP request's remote address and remote host will be correct.
+
+/--neon
+	http:
+		proxy: 127.0.0.1  # ip address, range, hostname or array of these values
+\--
+
+
+Sessions
+========
+
+Here you can set all [directives |php:session.configuration] (in camelCase format).
+
+/-- neon
+	session:
+		autoStart: true  # default is smart
+		expiration: 10 days
+		name: ...
+		...
+\--
+
+.[tip]
+`autoStart: smart` is recommended. It automatically starts the session only if it already exists.
+
+Read more on [session configuration | sessions#Session configuration].
+
+
+Application
+===========
+
+/--neon
+	application:
+		debugger: true  # debugger bar panel
+		catchExceptions: %productionMode%
+		errorPresenter: Front:Error
+		mapping:  # mapping between presenter name and presenter class
+			Front: App\*Module\*Presenter
+\--
+
+
+Routing
+=======
+
+/--neon
+	routing:
+		debugger: true  # debugger bar panel
+		routes:
+				index.php: Dashboard:default
+				'<presenter>/<action>[/<id>]': Dashboard:default
+\--
+
+[Routes |routing#toc-route-for-prettier-urls] are in `mask: action` format.
+
+
+Security
+========
+
+/--neon
+	security:
+		debugger: true  # debugger bar panel
+
+		users:
+			johndoe: secretpassword
+
+		roles:
+			guest:
+			member:
+			admin: [member]  # admin extends member
+
+		resources:
+			file:
+\--
+
+By filling in `users` option you create `SimpleAuthenticator`, by defining `roles` or `resources` you create `Nette\Security\Permission` authorizator. More in [User Authorization and Privileges |access-control].
+
+
+HTTP headers
+-------------
+
+/--neon
+	http:
+		frames: ... # ovlivňuje hlavičku X-Frame-Options
+\--
+
+For security reasons Nette Framework sends HTTP header `X-Frame-Options: SAMEORIGIN` by default, so that the page can be embedded in iframe only from pages on the same domain. This behavior may be unwanted in certain situations (for example if you are developing a facebook application). You can override this setting by `frames: yes`, `frames: http://allowed-host.com` or `frames: no`.
+
+
+Mailing
+=======
+
+Default mailer is `SendmailMailer`. By setting `smtp` you activate `SmtpMailer`.
+
+/--neon
+	mail:
+		smtp: true  # use SmtpMailer instead of SendmailMailer
+		# optional settings
+		host: ...
+		port: ...
+		username: ...
+		password: ...
+		secure: # possible values are ssl, tls or null
+		timeout: ...
+\--
+
+
+Database
+========
+
+You can define multiple database connections, if you do so you can set which one will be [automatically injected |configuring#toc-auto-wiring] to your services by the `autowired` option. The following code shows how to set up one connection called `default`.
+
+/--neon
+	database:
+		default:
+			dsn: "sqlite2:%appDir%/models/demo.db"
+			user: ...
+			password: ...
+			options: [PDO::MYSQL_ATTR_COMPRESS = true]
+			debugger: false  # debugger bar panel
+			explain: false   # explain queries in debugger bar
+			reflection: discovered  # or static or classname, default is discovered
+			autowired: true
+\--
+
+This creates service `@nette.database.default` and sets reflection and cache for you.
+
+
+Forms
+=====
+
+You can change default validation error messages.
+
+/--neon
+	forms:
+		messages:
+			EQUAL: 'Please enter %s.'
+			FILLED: 'Please complete mandatory field.'
+			MIN_LENGTH: 'Please enter a value of at least %d characters.'
+			EMAIL: '%label must be valid e-mail'
+\--
+
+
+Latte
+=====
+
+You can turn on and off XHTML rendering mode and register custom macros. Custom macros may be passed either as a class name or as a service reference. The default called method is `install`, you may change it by appending a double colon and a custom method name.
+
+/--neon
+	latte:
+		xhtml: yes  # default is no
+		macros:
+			- App\MyLatteMacros::register  # static method, classname or callable
+			- @App\MyLatteMacrosFactory    # service with install method
+			- @App\MyLatteMacrosFactory::register # service with register method
+
+	services:
+		- App\MyLatteMacrosFactory
+\--
+
+
+DI container
+============
+
+/--neon
+	di:
+		debugger: true  #debugger bar panel
+\--
+
+
+Tracy debugger
+==============
+
+/--neon
+	tracy:
+		email: webmaster@example.com  # for sending error logs
+		strictMode: TRUE
+		editor: ...
+		browser: ...
+
+		bar:  # debugger bar panels
+			- Nette\Bridges\DITracy\ContainerPanel  # alias of DI container bar
+			- IncludePanel
+			- XDebugHelper('myIdeKey')
+			- MyPanel(@MyService)
+
+		blueScreen:  # blue screen panels
+			- DoctrinePanel::renderException
+\--
+
+
+Low-level modifications
+=======================
+
+All these settings affect final DI container. Compared to direct definition in `services` section it provides shorter and more straightaway syntax. If you need to tune these services by yourself, you can redefine them:
+
+/--neon
+services:
+	mail.mailer:
+		class: MySmtpMailer
+
+	application.presenterFactory:
+		class: MyPresenterFactory
+\--
+
+Or create new services extending the default ones:
+
+/--neon
+services:
+	myConnection < nette.database.default:
+		setup:
+			$onQuery: [ @logger::log ]
+\--
+
+
+
+Custom services
+***************
+
+
+Services definitions
+====================
+
+/--code neon
+services:
+	database: Nette\Database\Connection(%dsn%, %user%, %password%)
+
+# or multi-lines
+	database:
+		factory: Nette\Database\Connection(%dsn%, %user%, %password%)
+
+# or more multi-lines :-)
+	database:
+		class: Nette\Database\Connection
+		arguments: [%dsn%, %user%, %password%]
+\--
+
+Generates:
+
+/--php
+function createServiceDatabase()
+{
+	return new Nette\Database\Connection(
+		$this->parameters['dsn'],
+		$this->parameters['user'],
+		$this->parameters['password']
+	);
+}
+\--
+
+Service definition:
+
+/--code neon
+services:
+	database:
+		class: Nette\Database\Connection
+		factory: DbFactory::createConnection
+
+\--
+
+`DbFactory::createConnection`:
+
+/--php
+class DbFactory
+{
+	static function createConnection(Nette\DI\Container $container)
+	{
+		...
+	}
+}
+\--
+
+Generates:
+
+/--php
+	function createServiceDatabase()
+	{
+		return DbFactory::createConnection($this);
+	}
+\--
+
+
+Setup
+=====
+
+/--code neon
+services:
+	database:
+		class: Nette\Database\Connection(%dsn%, %user%, %password%)
+		setup:
+			- setCacheStorage(@cacheStorage)
+
+\--
+
+Generates:
+
+/--php
+	function createServiceDatabase()
+	{
+		$service = new Nette\Database\Connection(...);
+		$service->setCacheStorage($this->cacheStorage);
+		return $service;
+	}
+\--
+
+Autowiring feature adds dependencies automatically, so they don't even have to be mentioned:
+
+/--code neon
+setup:
+	- setCacheStorage
+\--
+
+In case the `cacheStorage` service does not exist, it is possible to use a result of a call as a parameter:
+
+/--code neon
+setup:
+	- setCacheStorage( Factory::createStorage() )
+
+# or a method of other service:
+	- setCacheStorage( @factory::createStorage() )
+\--
+
+Alternatively a newly created class instance:
+
+/--code neon
+setup:
+	- setCacheStorage( Nette\Caching\Storages\FileStorage(%tempDir%) )
+
+# generates: $service->setCacheStorage(new Nette\Caching\Storages\FileStorage(...));
+\--
+
+You can also set a value of a property:
+
+substitutions
+/--code neon
+setup:
+	- $substitutions( [db: test] )
+
+# generates: $service->substitutions = ['db' => 'test'];
+\--
+
+Full example:
+
+/--code neon
+parameters:
+	database:
+		driver: mysql
+		host: localhost
+		dbname: test
+		user: jim
+		password: beam
+		substitutions:
+			db: test
+
+services:
+	database:
+		class: Nette\Database\Connection(
+			'%database.driver%:host=%database.host%;dbname=%database.dbname%',
+			%database.user%, %database.password%, null,
+			Nette\Database\Reflection\DiscoveredReflection()
+		)
+		setup:
+			- setCacheStorage
+			- $substitutions( %database.substitutions% )
+
+\--
+
+
+
+Anonymous services
+==================
+
+Time after time there are services that are in fact not referenced anywhere else in config files. Naming these services in this case is not necessary. To define an anonymous service, use the following syntax:
+
+/--code neon
+services:
+	- Simple\Service
+
+	-
+		class: Complex\Service
+		setup:
+			- setLang(%lang%)
+\--
+
+To refer to such anonymous service you will need to use the fully qualified class name instead.
+
+/--code neon
+services:
+	router: @App\RouterFactory::createRouter
+\--
+
+Keep in mind that from a nature of anonymous services, it is not possible to register more than one of the same type, because it would lead to an ambiguity.
+
+
+Service definitions inheritance
+===============================
+
+/--code neon
+services:
+	dev_database < database
+		setup:
+			- Diagnostics\ConnectionPanel::initialize
+
+\--
+
+
+
+Auto-wiring
+***********
+
+Auto-wiring feature can automatically pass dependencies into constructor and methods of the service. It uses typehinting and `@return` annotations. There can be only one service matching the type in the container, otherwise an exception is thrown.
+
+To define more than one service of the same type we need to exclude them from auto-wiring:
+
+/--code neon
+services:
+	cacheStorage:
+		class: Nette\Caching\Storages\FileStorage(%tempDir%)
+
+	tempCacheStorage:
+		class: Nette\Caching\Storages\DevNullStorage
+		autowired: no
+
+\--
+
+
+When modifying the Nette Framework's core services we need to make sure the container is aware of the classes we want to use. That means using fully qualified class names in `@return` annotations or set the FQ class name with `class` entry.
+
+
+Multiple configuration files
+****************************
+
+Use `includes` section to add more configuration files.
+
+/--code neon
+includes:
+	- parameters.php
+	- services.neon
+	- presenters.neon
+\--
+
+Configuration merging process assigns the highest priority to the file containing `includes` section and the lowest priority to the first included file. To prevent merging of a certain array use exclamation mark right after the name of the array:
+
+/--code neon
+argument!: [1, 2, 3]
+\--
+
+
+
+{{themeicon: icon-config.png}}
+{{composer: nette/nette}}

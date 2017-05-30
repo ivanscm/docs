@@ -1,0 +1,67 @@
+/---div .[column]
+
+[* icon-guides-small.png *] Руководство разработчика
+---------------------
+
+- [Формы |forms]
+- [Шаблоны |latte:], [Макросы Latte |latte:macros] and [Фильтры |latte:filters]
+- [Приложение MVC и представители (presenters) |presenters]
+- [Конфигурация |configuring], [Внедрение зависимостей (DI) |dependency-injection], [Работа с зависимостями |di-usage] and [Расширение зависимостей |di-extensions]
+- [Компоненты и элементы управления |components]
+- [Роутинг |routing]
+- [Аутентификация и авторизация |access-control]
+- [Отладка и обработка ошибок |tracy:], [Расширение отладчика |tracy:extensions]
+- [AJAX]
+- [Улучшение PHP |php-language-enhancements]
+- [HTTP запросы и ответы |http-request-response]
+- [База данных |database], [Таблица |database-table], [Выборка |database-selection], [Активная строка (ActiveRow) |database-activerow]
+- [Сессии |sessions]
+- [Отправка почты |mailing]
+- [Работа с изображениями |images]
+- [Кэширование |caching]
+- [Локализация |localization]
+- [Тестирование |tester:], [Непрерывная интеграция (CI) |tester:testing-with-travis]
+- [Разбивка на страницы |pagination]
+- [Автозагрузка |auto-loading]
+- [Просмотр файлов на диске |finder]
+- [Атомарные операции |atomicity]
+- [Валидация |validators]
+- [Строки |strings], [массивы |arrays], [Элементы HTML |html-elements] и [ЧПУ |urls]
+
+\--
+
+/---div .[column]
+
+[* icon-welcome-small.png *] Начало работы
+---------------------------------
+
+- [Введение в Nette |getting-started]
+- **[Создайте первое приложение! |quickstart]**
+- [Глоссарий |glossary]
+
+
+[* icon-question-small.png *] Общая информация
+-------------------------------
+
+- [Справочник по API |https://api.nette.org/2.4]
+- [Миграция с версии 2.3 на версию 2.4 |migration-2.4]
+- [Проверка кода |code-checker]
+- [Защита от уязвимостей |vulnerability-protection]
+- [Требования к серверу |Requirements]
+- [Лицензия |www:license] и [содействующие |https://nette.org/contributors]
+
+\--
+
+/---div .[column]
+
+[* icon-ruler-small.png *] Разработка
+---------------------------
+
+- [Содействие | www:contributing]
+- [Написание документации |www:writing]
+- <a href="irc://irc.freenode.net/nettefw">IRC #nettefw</a>
+- [Исправление проблем |troubleshooting]
+
+\--
+
+{{robots:noindex}}

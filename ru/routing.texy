@@ -1,0 +1,647 @@
+URL Routing
+***********
+
+/--div .[perex]
+Routing is a two-way conversion between URL and presenter action. *Two-way* means we can both determine what presenter URL links to, but also vice versa: generate URL for given action. This article contains:
+
+- how to define routes and create links
+- a few notes about SEO redirection
+- how to debug defined routes
+- how to create your own router
+\--
+
+
+
+What is Routing?
+================
+
+Routing is a **two-way conversion** between **URL** and an **application request**.
+
+- `Nette\Http\IRequest` (includes URL) -> `Nette\Application\Request`
+- `Nette\Application\Request` -> absolute URL
+
+
+Thanks to bidirectional routing you don't have to hardcode URLs into templates anymore, you simply link to [presenters' actions|presenters#toc-handling-presenter-actions] and framework generates the URLs for you:
+
+/--html
+{* creates a link to presenter 'Product' and action 'detail' *}
+<a n:href="Product:detail $productId">product detail</a>
+\--
+
+Learn more about [creating links |presenters#link-creation].
+
+Routing is a **separate application layer**. This allows you to very efficiently manipulate with the URL structure without the need to modify the application itself. It's simple to change routes anytime, while keeping the original addresses preserved and automatically redirect to the new variants. So hey, who's got that? :-)
+
+
+SimpleRouter
+============
+
+Desired URL format is set by a *router*. The most plain implementation of router is [SimpleRouter | api:Nette\Application\Routers\SimpleRouter]. It can be used when there's no need for a specific URL format, when `mod_rewrite` (or alternatives) is not available or when we simply do not want to bother with user-friendly URLs yet.
+
+Generated addresses will look like this:
+
+/--
+http://example.com/?presenter=Product&action=detail&id=123
+\--
+
+The first parameter of the `SimpleRouter` constructor is a default presenter action, ie. action to be executed if we open e.g. `http://example.com/` without additional parameters.
+
+/--php
+// defaults to presenter 'Homepage' and action 'default'
+$router = new Nette\Application\Routers\SimpleRouter('Homepage:default');
+\--
+
+The second constructor parameter is optional and is used to pass additional [#flags] (only `SimpleRouter::ONE_WAY` for unidirectional route).
+
+The recommended way to configure application to use `SimpleRouter` is to use [configuration file | configuring#services definitions] (e.g. `config.neon`):
+
+/--neon
+services:
+	application.router: Nette\Application\Routers\SimpleRouter('Homepage:default')
+\--
+
+
+Route: for prettier URLs .{toc: Route}
+========================
+
+Human-friendly URLs (also more cool & prettier) are easier to remember and do help SEO((search engine optimalization)). Nette Framework keeps current trends in mind and fully meets developers' desires.
+
+.[note]
+All requests must be handled by `index.php` file. This can be accomplished e.g. by using Apache module `mod_rewrite` or Nginx's `try_files` directive (see [how to configure a server for nice URLs |troubleshooting#how-to-configure-a-server-for-nice-urls]).
+
+Class [Route | api:Nette\Application\Routers\Route] is able to create addresses in pretty much any format one can though of. Let's start with a simple example, generating the following pretty URL for action `Product:default` with `id = 123`:
+
+/--
+http://example.com/product/detail/123
+\--
+
+The following snippet creates a `Route` object, passing path mask as the first argument and specifying default action in the second argument. We may pass additional [#flags] using the third argument.
+
+/--php
+// action defaults to presenter Homepage and action default
+$route = new Route('<presenter>/<action>[/<id>]', 'Homepage:default');
+
+// alternatively written using an array
+$route = new Route('<presenter>/<action>[/<id>]', [
+	'presenter' => 'Homepage',
+	'action'    => 'default'
+]);
+\--
+
+This route is usable by all presenters and actions. Accepts paths such as `/article/edit/10` or `/catalog/list`, because the `id` part is wrapped in square brackets, which marks it as [optional | #optional sequences].
+
+Because other parameters (`presenter` and `action`) do have default values (`Homepage` and `default`), they are optional too. If their value is the same as the default one, they are skipped while URL is generated. Link to `Product:default` generates only `http://example.com/product` and link to `Homepage:default` generates only `http://example.com/`.
+
+
+Path Mask
+---------
+
+The simplest path mask consists only of a **static URL** and a target presenter action.
+
+/--php
+$route = new Route('products', 'Products:default');
+\--
+
+Most real masks however contain some **parameters**. Parameters are enclosed in angle brackets (e.g. `<year>`) and are passed to the target presenter.
+
+/--php
+$route = new Route('history/<year>', 'History:view');
+\--
+
+Mask can also contain traditional GET arguments (query after a question mark). Neither validation expressions nor more complex structures are supported in this part of path mask, but you can set what key belongs to which variable:
+
+/-- php
+// use GET parameter "cat" as a "categoryId" in our application
+$route = new Route('<presenter>/<action> ? id=<productId> & cat=<categoryId>', ...);
+\--
+
+.[note]
+The parameters before a question mark are called *path parameters* and the parameters after a question mark are called *query parameters*.
+
+
+/--comment
+TERMINOLOGY ISSUE:
+I've decided to use terminilogy by @Panda (http://edu.lynt.cz/course/download/?fileId=10). @DG uses "absolute path" for what I call here "relative to server document root" and "absolute URL" for what I call "absolute path". Any idea how to resolve this?
+\--
+
+Mask can not only describe path relative to application document root (web root), but can as well contain path relative to server document root (starts with a single slash) or absolute path with domain (starts with a double slash).
+
+/--php
+// relative to application document root (www directory)
+$route = new Route('<presenter>/<action>', ...);
+
+// relative to server document root
+$route = new Route('/<presenter>/<action>', ...);
+
+// absolute path including hostname
+$route = new Route('//<subdomain>.example.com/<presenter>/<action>', ...);
+\--
+
+Absolute path mask may utilize the following variables:
+- `%tld%` = top level domain, e.g. `com` or `org`
+- `%sld%` = second level domain, e.g. at `example.com` return `example`
+- `%domain%` = second level domain, e.g. `example.com`
+- `%basePath%`
+
+/--php
+$route = new Route('//www.%domain%/%basePath%/<presenter>/<action>', ...);
+$route = new Route('//www.%sld%.%tld/%basePath%/<presenter>/<action', ...);
+\--
+
+
+
+Route Collection
+----------------
+
+Because we usually define more than one route, we wrap them into a [RouteList | api:Nette\Application\Routers\RouteList].
+
+/--php
+use Nette\Application\Routers\RouteList;
+use Nette\Application\Routers\Route;
+
+$router = new RouteList();
+$router[] = new Route('rss.xml', 'Feed:rss');
+$router[] = new Route('article/<id>', 'Article:view');
+$router[] = new Route('<presenter>/<action>[/<id>]', 'Homepage:default');
+\--
+
+.[note]
+Unlike other frameworks, Nette does not require routes to be named.
+
+.[caution]
+It's important in which order are the routes defined as they are evaluated from top to bottom. The rule of thumb here is that routes are declared from the **most specific at the top** to the **most vague at the bottom**.
+
+Keep in mind that huge amount of routes can negatively affect application speed, mostly when generating links. It's worth to keep routes as simple as possible.
+
+.[note]
+If no route is found, a [BadRequestException | api:Nette\Application\BadRequestException] is thrown, which is shown as 404 Not Found to the user.
+
+
+Router Factory
+-------------
+
+The recommended way to configure the application router is to write a factory (located e.g. in `app/router/RouterFactory.php`) and register it to [system DI container | configuring] in a configuration file (located e.g. in `app/config/config.neon`).
+
+**File app/router/RouterFactory.php**:
+
+/--html
+<?php
+namespace App;
+
+use Nette\Application\Routers\RouteList,
+	Nette\Application\Routers\Route;
+
+class RouterFactory
+{
+	/**
+	 * @return \Nette\Application\IRouter
+	 */
+	public function createRouter()
+	{
+		$router = new RouteList();
+		$router[] = new Route('<presenter>/<action>', 'Homepage:default');
+		return $router;
+	}
+}
+\--
+
+.[note]
+The `@return` annotation is important and required for getting the code to work.
+
+**File app/config/config.neon**:
+
+/--neon
+services:
+	routerFactory: App\RouterFactory
+	router: @routerFactory::createRouter
+\--
+
+
+Default Values
+--------------
+
+Each parameter may have defined a default value in the mask:
+
+/--php
+$route = new Route('<presenter=Homepage>/<action=default>/<id=>');
+\--
+
+Or utilizing an array:
+
+/--php
+$route = new Route('<presenter>/<action>/<id>', [
+	'presenter' => 'Homepage',
+	'action' => 'default',
+	'id' => NULL,
+]);
+
+// equals to the following complex notation
+$route = new Route('<presenter>/<action>/<id>', [
+	'presenter' => [
+		Route::VALUE => 'Homepage',
+	],
+	'action' => [
+		Route::VALUE => 'default',
+	],
+	'id' => [
+		Route::VALUE => NULL,
+	],
+]);
+\--
+
+Default values for `<presenter>` and `<action>` can also be written as a string in the second constructor parameter.
+
+/--php
+$route = new Route('<presenter>/<action>/<id=>', 'Homepage:default');
+\--
+
+
+
+Validation Expressions
+----------------------
+
+Each parameter may have defined a **regular expression** which it needs to match. This regular expression is checked both when matching and generating URL. For example let's set `id` to be only numerical, using `\d+` regexp:
+
+/--php
+// regexp can be defined directly in the path mask after parameter name
+$route = new Route('<presenter>/<action>[/<id \d+>]', 'Homepage:default');
+
+// equals to the following complex notation
+$route = new Route('<presenter>/<action>[/<id>]', [
+	'presenter' => 'Homepage',
+	'action' => 'default',
+	'id' => [
+		Route::PATTERN => '\d+',
+	],
+]);
+\--
+
+
+.[note]
+Default validation expression for path parameters is `[^/]+`, meaning all characters but a slash. If a parameter is supposed to match a slash as well, we can set the regular expression to `.+`.
+
+
+Optional Sequences
+------------------
+
+Square brackets denote optional parts of mask. Any part of mask may be set as optional, including those containing parameters:
+
+/--php
+$route = new Route('[<lang [a-z]{2}>/]<name>', 'Article:view');
+
+// Accepted URLs:      Parameters:
+//   /en/download        action => view, lang => en, name => download
+//   /download           action => view, lang => NULL, name => download
+\--
+
+Obviously, if a parameter is inside an optional sequence, it's optional too and defaults to `NULL`. Sequence should define it's surroundings, in this case a slash which must follow a parameter, if set.
+The technique may be used for example for optional language subdomains:
+
+/--php
+$route = new Route('//[<lang=en>.]%domain%/<presenter>/<action>', ...);
+\--
+
+Sequences may be freely nested and combined:
+
+/--php
+$route = new Route(
+	'[<lang [a-z]{2}>[-<sublang>]/]<name>[/page-<page=0>]',
+	'Homepage:default'
+);
+
+// Accepted URLs:
+//   /cs/hello
+//   /en-us/hello
+//   /hello
+//   /hello/page-12
+\--
+
+
+URL generator tries to keep the URL as short as possible (while unique), so what can be omitted is not used. That's why `index[.html]`  route generates `/index`. This behavior can be inverted by writing an exclamation mark after the leftmost square bracket that denotes the respective optional sequence:
+
+/--php
+// accepts both /hello and /hello.html, generates /hello
+$route = new Route('<name>[.html]');
+
+// accepts both /hello and /hello.html, generates /hello.html
+$route = new Route('<name>[!.html]');
+\--
+
+
+Optional parameters (ie. parameters having default value) without square brackets do behave as if wrapped like this:
+
+/--php
+$route = new Route('<presenter=Homepage>/<action=default>/<id=>');
+
+// equals to:
+$route = new Route('[<presenter=Homepage>/[<action=default>/[<id>]]]');
+\--
+
+If we would like to change how the rightmost slashes are generated, that is instead of `/homepage/` get a `/homepage`, we can adjust the route:
+
+/--php
+$route = new Route('[<presenter=Homepage>[/<action=default>[/<id>]]]');
+\--
+
+
+Flags
+-----
+
+`Route` default behavior can be altered by several flags which can be passed as the third constructor parameter.
+
+**ONE_WAY flag** - One way routes are usually used to preserve old URLs functionality, when an application is rewritten. Flag `Route::ONE_WAY` marks routes, which are not used for URL generation.
+
+/--php
+// old URL /product-info?id=123, new URL /product/123
+$router[] = new Route('product-info', 'Product:detail', Route::ONE_WAY);
+$router[] = new Route('product/<id>', 'Product:detail');
+\--
+
+
+HTTPS
+-----
+We need configurate our server for use HTTPS protocol.
+
+
+Forward all addresses for already well-established applications can be achieved by using .htaccess file in the root directory of our application using a permanent redirect with code 301.
+
+/--php
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	...
+	RewriteCond %{HTTPS} off
+	RewriteRule .* https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+	...
+</IfModule>
+\--
+
+Routes generate URLs with the same protocol, which the page was loaded. If we need, so that certain addresses use other protocol, we use them in mask of route.
+
+/--php
+// Uses the same protocol, which the page was loaded
+$route = new Route('//%host%/<presenter>/<action>','Homepage:default');
+
+// Forwarding to HTTP protocol
+$route = new Route('http://%host%/<presenter>/<action>','Homepage:default');
+
+// Forwarding to HTTPS protocol
+$route = new Route('https://%host%/<presenter>/<action>','Admin:default');
+\--
+
+.[caution]
+HTTPS must be supported on your webhosting.
+
+
+Filters and Translation
+-----------------------
+
+It's a good practice to write source code in English, but what if you need your application to run in a different environment? Simple routes such as:
+
+/--php
+$route = new Route('<presenter>/<action>/<id>', [
+	'presenter' => 'Homepage',
+	'action' => 'default',
+	'id' => NULL,
+]);
+\--
+
+will generate English URLs, such as `/product/detail/123`, `/cart` or `/catalog/view`. If we would like to translate those URLs, we can use a *dictionary* defined under `Route::FILTER_TABLE` key. We'd extend the route so:
+
+/--php
+$route = new Route('<presenter>/<action>/<id>', [
+	'presenter' => [
+		Route::VALUE => 'Homepage', // default value
+		Route::FILTER_TABLE => [
+			// translated string in URL => presenter
+			'produkt' => 'Product',
+			'einkaufswagen' => 'Cart',
+			'katalog' => 'Catalog',
+		],
+	],
+	'action' => [
+		Route::VALUE => 'default',
+		Route::FILTER_TABLE => [
+			'sehen' => 'view',
+		],
+	],
+	'id' => NULL,
+]);
+\--
+
+.[tip]
+Multiple keys under `Route::FILTER_TABLE` may have the same value. That's how aliases are created. The last value is the canonical one (used for generating links).
+
+Dictionaries may be applied to any path parameter. If a translation is not found, the original (non-translated) value is used. The route by default accepts both translated (e.g. `/einkaufswagen`) and original (e.g. `/cart`) URLs. If you would like to accept only translated URLs, you need to add `Route::FILTER_STRICT => TRUE` to the route definition.
+
+
+Besides setting dictionaries as arrays, it's possible to set **input and output filters**. Input and output filter are callbacks defined under `Route::FILTER_IN` and `Route::FILTER_OUT` keys respectively.
+
+/--php
+$route = new Route('<presenter=Homepage>/<action=default>', [
+	'action' => [
+		Route::FILTER_IN => function($action) {
+			return strrev($action);
+		},
+		Route::FILTER_OUT => function($action) {
+			return strrev($action);
+		},
+	],
+]);
+\--
+
+The **input filter** accepts value from URL and should return a value which will be passed to a presenter. The **output filter** accepts value from presenter and should return a value which will be used in URL. If any of those filters is unable to filter the value (usually because it is invalid), it should return `NULL`.
+
+/--comment
+	Because input and output filters are more powerful concept than dictionary filtering, the previous example with `Route::FILTER_TABLE` can be rewritten as follows:
+
+	/--php
+	$filterTable = [
+		'produkt' => 'Product',
+		'einkaufswagen' => 'Cart',
+		'katalog' => 'Catalog',
+	];
+
+	$route = new Route('<presenter>/<action>/<id>', [
+		'presenter' => [
+			Route::VALUE => 'Homepage',
+			Route::FILTER_IN => function($presenter) use ($filterTable) {
+				if (isset($filterTable[$presenter])) {
+					return $filterTable[$presenter];
+				} else {
+					return $presenter;
+				}
+			},
+			Route::FILTER_OUT => function($presenter) use ($filterTable) {
+				return array_search($presenter, $filterTable) ?: $presenter;
+			},
+		],
+		'action' => [
+			Route::VALUE => 'default',
+			Route::FILTER_IN => function($action) {
+				if ($action === 'sehen') $action = 'view';
+				return $action;
+			},
+			Route::FILTER_OUT => function($action) {
+				if ($action === 'view') $action = 'sehen';
+				return $action;
+			},
+		],
+		'id' => NULL,
+	]);
+	\--
+\--
+
+
+Global filters
+--------------
+
+Besides filters for specific parameters, you can also define **global filters** which accepts an associative array with all parameters and returns an array with filtered parameters. Global filters are defined under `NULL` key.
+
+/--php
+$route = new Route('<presenter>/<action>', [
+	'presenter' => 'Homepage',
+	'action' => 'default',
+	NULL => [
+		Route::FILTER_IN => function(array $params) {
+			// ...
+			return $params;
+		},
+		Route::FILTER_OUT => function(array $params) {
+			// ...
+			return $params;
+		},
+	],
+]);
+\--
+
+.[tip]
+You can use *global filters* to filter certain parameter based on a value of another parameter, e.g. translate `<presenter>` and `<action>` based on `<lang>`.
+
+
+
+Foo Parameters
+--------------
+
+Foo parameters are basically unnamed parameters which allow you to match a regular expression. The following route matches `/index`, `/index.html`, `/index.htm` and `/index.php`:
+
+/--php
+$route = new Route('index<? \.html?|\.php|>', 'Homepage:default');
+\--
+
+It's also possible to explicitly define a string which will be used for URL generation (similar to setting default value for real parameters). The string must be placed directly after the question mark. The following route is similar to the previous one, but generates `/index.html` instead of `/index`, because the string `.html` is set as a "default value".
+
+/--php
+$route = new Route('index<?.html \.html?|\.php|>', 'Homepage:default');
+\--
+
+
+Modules
+-------
+
+In Nette we can split presenters into modules. Therefore we need to work with those modules in routes. We can use `module` parameter in `Route` class:
+
+/--code php
+new Route('admin/<presenter>/<action>', [
+	'module' => 'Admin'
+]);
+\--
+
+If we have more routes that we want to group together in a module, we can use `RouteList` with the first parameter:
+
+/--code php
+$adminRouter = new RouteList('Admin');
+$adminRouter[] = new Route('admin/<presenter>/<action>');
+\--
+
+
+Routing Debugger
+================
+
+Working with routes may seem a bit magical at first. That's why you'll appreciate the value of Routing Debugger. It's a [Debugger | tracy:] bar panel which gives you a list of all parameters a router got and a list of all defined routes. It also shows on which presenter and action you are currently on.
+
+[* routing-debugger.png *]
+
+Routing debugger is enabled by default if the application runs in a debug mode. You can however disable it in a configuration file:
+
+/--neon
+	routing:
+		debugger: off # on by default
+\--
+
+
+SEO and Canonicalization
+========================
+
+Framework increases SEO (search engine optimization) as it prevents multiple URLs to link to different content (without a proper redirect). If more than one addresses link to the same target (`/index` and `/index.html`), framework choses the first (makes it canonical) and redirects the other one to it with an HTTP code 301. Thanks to that your page won't have duplicities on search engines and their rank won't be split.
+
+This whole process is called canonicalization. Default (canonical) URL is the one router generates, that is the first route in [collection | #route-collection] which does not return `NULL` and does not have a `ONE_WAY` [flag | #flags].
+
+Canonicalization is done by [Presenter | api:Nette\Application\UI\Presenter] and it's switched on by default. You may disable it by setting [Presenter::$autoCanonicalize | api:Nette\Application\UI\Presenter::$autoCanonicalize] to `FALSE`, e.g. in `startup()`.
+
+.[note]
+Ajax and POST requests are not redirected as user would suffer either a data loss, or it would yield no additional SEO value.
+
+
+Modularity
+==========
+
+If we want to add separate modules into our application that have their own routes, for example a discussion forum, we may define routes elsewhere, possibly in `createRoutes()` method:
+
+/--php
+class Forum
+{
+	static function createRoutes($router, $prefix)
+	{
+		$router[] = new Route($prefix . 'index.php', 'Forum:Homepage:default');
+		$router[] = new Route($prefix . 'admin.php', 'Forum:Admin:default');
+		...
+	}
+}
+\--
+
+"Routing-in" the forum into existing application can be as easy as calling this method: (`bootstrap.php`)
+
+/--php
+$router = new RouteList;
+// our routes
+...
+
+// adding forum module
+Forum::createRoutes($router, '//forum.example.com/');
+
+$container->addService('router', $router);
+\--
+
+
+Custom Router
+=============
+
+If these offered routes do not fit your needs, you may create your own router and add it to your *router collection*. Router is nothing more than an implementation of [IRouter | api:Nette\Application\IRouter] with it's two methods:
+
+/--php
+use Nette\Application\Request as AppRequest;
+use Nette\Http\IRequest as HttpRequest;
+use Nette\Http\Url;
+
+class MyRouter implements Nette\Application\IRouter
+{
+	function match(HttpRequest $httpRequest)
+	{
+		// ...
+	}
+
+	function constructUrl(AppRequest $appRequest, Url $refUrl)
+	{
+		// ...
+	}
+}
+\--
+
+Method `match` does process an [HttpRequest  | api:Nette\Http\Request] (which offers more than just a [Url | api:Nette\Http\Url]) into an internal [Nette\Application\Request | api:Nette\Application\Request] which contains presenter name and it's parameters. If the HTTP request could not be processed, it should return `NULL`.
+
+Method `constructUrl` generates an absolute URL from application request, possibly utilizing information from `$refUrl` argument.
+
+Possibilities of custom routers are unlimited, for example it's possible to implement a router based on database records.
+
+{{themeicon: icon-map.png}}
+{{composer: nette/application}}

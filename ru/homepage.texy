@@ -1,0 +1,83 @@
+Документация
+************
+
+.[perex]
+Здесь вы можете найти много информации для изучения фреймворка Nette, что бы максимально использовать его.
+
+
+/---div .[column navig]
+
+[* icon-welcome.png *] Руководство разработчика.{margin-top: 0}
+-----------------------
+
+- [Введение в Nette |getting-started]
+- **[Создайте первое приложение! |quickstart] .[main]**
+- [Справочник по API | https://api.nette.org/] для обзора классов, методов и параметров
+
+
+[* icon-question.png *] Общая информация
+----------------
+
+- [Миграция с версии 2.3 на версию 2.4 | migration-2.4]
+- [Миграция с версии 2.2 на версию 2.3 | migration-2.3]
+- [Миграция с версии 2.1 на версию 2.2 | migration-2.2]
+- [Миграция с версии 2.0 на версию 2.1 | migration-2.1]
+- [Особенности | www:#features]
+- [Защита от уязвимостей |vulnerability-protection]
+- [Исправление проблем |troubleshooting]
+- [Глоссарий |glossary]
+- [Требования к серверу |Requirements]
+- [Лицензия |www:license]
+- [Содействующие |https://nette.org/contributors]
+- [Чат | https://gitter.im/nette/nette]
+
+
+[* icon-ruler.png *] Разработка
+-----
+
+- [Содействие | www:contributing]
+- [Написание документации |www:writing]
+
+\--
+
+
+
+/---div .[column last navig]
+
+[* icon-guides.png *] Руководство разработчика .{margin-top: 0}
+---------------------
+
+.[#summary]
+- [Формы |forms]
+- [Шаблоны |latte:], [Макросы Latte |latte:macros] and [Фильтры |latte:filters]
+- [Приложение MVC и представители (presenters) |presenters]
+- [Конфигурация |configuring], [Внедрение зависимостей (DI) |dependency-injection], [Работа с зависимостями |di-usage] and [Расширение зависимостей |di-extensions]
+- [Компоненты и элементы управления |components]
+- [Роутинг |routing]
+- [Аутентификация и авторизация |access-control] и [пароли |passwords]
+- [Отладка и обработка ошибок |tracy:], [Расширение отладчика |tracy:extensions]
+- [AJAX]
+- [Улучшение PHP |php-language-enhancements]<br>(Nette\Object, аннотации и рефлексия)
+- [HTTP запросы и ответы |http-request-response]
+- [База данных |database]
+- [Таблица |database-table], [Выборка |database-selection], [Активная строка (ActiveRow) |database-activerow]
+- [Сессии |sessions]
+- [Отправка почты |mailing]
+- [Работа с изображениями |images]
+- [JSON]
+- [Кэширование |caching]
+- [Локализация |localization]
+- [Тестирование |tester:], [Непрерывная интеграция (CI) |tester:testing-with-travis]
+- [Разбивка на страницы |pagination]
+- [Автозагрузка |auto-loading]
+- [Просмотр файлов на диске |finder]
+- [Атомарные операции |atomicity]
+- [Валидация |validators]
+- Утилиты для [Строки |strings], [массивы |arrays], [Элементы HTML |html-elements] и [ЧПУ |urls]
+- Инструменты: [Проверка кода |code-checker], [Composer]
+
+\---
+
+
+{{themeicon: icon-help.png}}
+{{toc:no}}
