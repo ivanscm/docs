@@ -1,42 +1,42 @@
-Home Page
-**********
+Домашняя страница
+*****************
 
 .[perex]
-Let’s create the home page displaying your recent posts.
+Давайте создадим домашнюю страницу с недавними записями.
 
 
-Before we start, you should know at least some basics about Model-View-Presenter design pattern (similar to MVC((Model-View-Controller))):
+Прежде чем начать, вы должны иметь небольшое представление о шаблоне проектирования Модель-Вид-Презентер(MVP) (аналогично MVC((Модель-Вид-Контроллер))):
 
-- **Model** - data manipulation layer. It is completely separated from the rest of the application. It only communicates with presenters.
+- **Модель** - слой управления данными. Он полностью отделен от остальной части приложения. Он общается только с презентером.
 
-- **View** - a front-end definition layer. It renders requested data to the user using templates.
+- **Вид** - слой интерфейса. Он предоставляет запрашиваемые данные пользователю с использованием шаблонов.
 
-- **Presenter** (or Controller) - a connection layer. Presenter connects Model and View. Handles requests, asks Model for data and then passes them to the current View.
-
-
-In case of a very simple application like our blog, the Model layer will actually consist only of queries to the database itself - we don't need any extra PHP code for it.
-We only need to create Presenter and View layers. In Nette, each Presenter has its own Views, so we will continue with both simultaneously.
+- **Презентер** (или контроллер) - слой соединения. Презентер соединяет Модель и Вид. Обрабатывает запросы, запрашивает данные у Модели, а затем передает их в текущий Вид.
 
 
-Creating the Database with Adminer
-==================================
-
-To store the data, we will use the MySQL database, because it is the most common choice among web developers. But if you don’t like it, feel free to use a database of your choice.
-
-Let’s prepare the database which will store our blog posts. We can start very simply - just with a single table for posts.
-
-To create the database we can download "Adminer":[http://adminer.org/], or you can use another tool for database management.
+В случае очень простого приложение, как наш блог, Модель будет фактически состоять только из запросов к самой базе данных - нам не нужен дополнительный код для нее.
+Нам нужно только создать Презентер и Модель. В Nette, каждый Презентер имеет собственный Вид, поэтому мы будем продолжать с обоими одновременно.
 
 
-Let’s open Adminer and create a new database called `quickstart`.
+Создание базы данных в Adminer
+==============================
 
-Create a new table named `posts` and add these columns:
-- `id` int, click on autoincrement (AI)
-- `title` varchar, length 255
-- `content` text
-- `created_at` timestamp
+Для хранения данных мы будем использовать базу данных MySQL, потому что это самый распространенный выбор среди веб-разработчиков. Но если вам не нравится это, не стесняйтесь использовать базу данных по вашему выбору.
 
-It should look like this:
+Давайте подготовим базу данных, в которой будут храниться записи блога. Начнем очень просто - с одной таблицей для записей.
+
+Для создания базы данных используйте "Adminer":[http://adminer.org/], или любой другой инструмент для управления баз данных.
+
+
+Откроем Adminer и создадим новую базу данных. И назовем ее `quickstart`.
+
+Создадим таблицу `posts` и добавим столбцы:
+- `id` число(int), выберите автоинкремент (AI)
+- `title` символы(varchar), длина 255
+- `content` текст(text)
+- `created_at` временная метка(timestamp)
+
+Это должно выглядеть так:
 
 [* adminer-posts.png *]
 
@@ -50,45 +50,45 @@ CREATE TABLE `posts` (
 \--
 
 .[caution]
-It’s very important to use the **InnoDB** table storage. You will see the reason later. For now, just choose that and submit. You can hit Save now.
+Очень важно использовать табличное хранилище ** InnoDB **. Позже вы поймете почему. Пока, просто выберите это. Нажмите «Сохранить сейчас».
 
-Try adding some sample blog posts before we implement the capability of adding new posts directly from our application.
+Добавьте несколько записей в блогах для примера, прежде чем мы сможем добавить новые записи непосредственно из нашего приложения.
 
 /--SQL
 INSERT INTO `posts` (`id`, `title`, `content`, `created_at`) VALUES
-(1,	'Article One',	'Lorem ipusm dolor one',	CURRENT_TIMESTAMP),
-(2,	'Article Two',	'Lorem ipsum dolor two',	CURRENT_TIMESTAMP),
-(3,	'Article Three',	'Lorem ipsum dolor three',	CURRENT_TIMESTAMP);
+(1,	'Первая запись',	'Рыба рыба рыба один',	CURRENT_TIMESTAMP),
+(2,	'Вторая запись',	'Рыба рыба рыба два',	CURRENT_TIMESTAMP),
+(3,	'Третья запись',	'Рыба рыба рыба три',	CURRENT_TIMESTAMP);
 \--
 
 
 
-Connecting to the Database
-==========================
+Подключение к базе данных
+=========================
 
-Now, when the database is created and we have some posts in it, it’s the right time to display them on our new shiny page.
+Теперь, когда база данных создана, и у нас есть несколько сообщений в ней, самое время отобразить их на нашей новой замечательной странице.
 
-First, we need to tell our application which database to use. The database connection configuration is stored in `app/config/config.local.neon`. Set the connection DSN((Data Source Name)) and your credentials. It should look like this:
+Во-первых, нам нужно сообщить нашему приложению, какую базу данных использовать. Конфигурация подключения к базе данных находится в файле `app/config/config.local.neon`. Установите DSN((Data Source Name)) схему подключения и ваши учетные данные. Должно выглядеть так:
 
 /---neon
 	database:
 		dsn: 'mysql:host=127.0.0.1;dbname=quickstart'
 		user: root
-		password: *enter password here*
+		password: *укажите пароль здесь*
 \---
 
 .[note]
-Be aware of indenting while editing this file. [NEON |http://ne-on.org] format accepts both spaces and tabs but not both together! Configuration file in the Web Project uses tabs as default.
+Будьте в курсе отступов при редактировании этого файла. Формат [NEON |http://ne-on.org] понимает как пробелы, так и табы, но не вместе! В файле конфигурации данного проекта используются табы по умолчанию.
 
 .[tip]
-Whole configuration including is stored in `app/confing/` in files `confing.neon` and `config.local.neon`.
-File `config.neon` contains global configuration of application and `config.local.neon` contains only the parameters specific to the enviroment (e.g. difference between develop and production server).
+Вся конфигурация хранится в каталоге `app/confing/` в файлах `confing.neon` и `config.local.neon`.
+Файл `config.neon` содержит глобальные настройки приложения, а файл `config.local.neon` содержит только параметры, специфичные для окружения (разные для рабочего и разработки).
 
 
-Injecting the Database Connection
+Внедрение соединения с базой данных
 =============================
 
-The presenter (located in `app/presenters/HomepagePresenter.php`), which will list the articles, needs a database connection. To receive it, write a constructor like this:
+Презентеру (находящийся в `app/presenters/HomepagePresenter.php`) для списка статей, необходимо подключение к базе данных. Для этого напишем конструктор, подобный этому:
 
 /--php
 <?php
@@ -115,10 +115,10 @@ class HomepagePresenter extends Nette\Application\UI\Presenter
 
 
 
-Loading Posts from the Database
+Загрузка записей из базы данных
 ===============================
 
-Now let’s fetch the posts from the database and pass them to the template, which will then render the HTML code. This is what the so called *render* method is for
+Давайте получим записи из базы данных и передадим их в шаблон, который затем вернет HTML. Это реализуется в методе *render*
 
 /--php
 	public function renderDefault()
@@ -129,15 +129,15 @@ Now let’s fetch the posts from the database and pass them to the template, whi
 	}
 \--
 
-The presenter now has one render method `renderDefault()` that passes data to a view called `default`. Presenter templates can be found in `app/presenters/templates/{PresenterName}/{viewName}.latte`, so in this case the template will be located in `app/presenters/templates/Homepage/default.latte`. In the template, a variable named `$posts` is now available, which contains the posts from database.
+Теперь у Презентера есть метод `renderDefault()` который передает данные в Вид под названием `default`. Шаблоны Презентеров можно найти по пути `app/presenters/templates/{PresenterName}/{viewName}.latte`, в нашем случае шаблон будет находится в `app/presenters/templates/Homepage/default.latte`. В шаблоне теперь доступна переменная с именем `$posts`, которая содержит записи, которые мы получили из базы данных.
 
 
-Template
-========
+Шаблон
+======
 
-There is a generic template for the whole page (called *layout*, with header, stylesheets, footer, ...) and then specific templates for each view (e.g. for displaying the list of blog posts), which can override some of layout template parts.
+Существует общий для всех страниц шаблон (называемый *layout*, с заголовками, стилями, подвалом, ...) и конкретные шаблоны для каждого Вида (например для отображения списка записей блога), которые могут переопределять некоторые части общего шаблона.
 
-By default, the layout template is located in `app/presenters/templates/@layout.latte`, which contains:
+По умолчанию общий файл шаблона находится по пути `app/presenters/templates/@layout.latte`, и содержит:
 
 /--html
 ...
@@ -145,19 +145,19 @@ By default, the layout template is located in `app/presenters/templates/@layout.
 ...
 \--
 
-`{include content}` inserts a block named `content` into the main template. You can define it in the templates of each view. In this case we will edit the file `app/presenters/templates/Hompeage/default.latte` like this:
+`{include content}` вставляет в основной шаблон блок `content`. Вы можете определить его в любом шаблоне Вида. В нашем случае вы будете редактировать файл `app/presenters/templates/Hompeage/default.latte` вот так:
 
 /--html
 {block content}
 \--
 
-It defines the *content* [block |latte:macros#toc-blocks], which will be inserted into the layout. If you refresh the browser, you’ll see a page with text "Hello word" (in source code also with HTML header and footer defined in `@layout.latte`).
+Он определяет [блок |latte:macros#toc-blocks] *content*, который будет использовать в шаблоне. Если обновить страницу в браузере, вы увидете страницу "Hello word" (так же шапку и подвал определенные в `@layout.latte`).
 
-Let’s display the blog posts - we will edit the template like this:
+Покажем записи блога - измените шаблон:
 
 /--html
 {block content}
-	<h1 n:block="title">Můj blog</h1>
+	<h1 n:block="title">Мой блог</h1>
 
 	{foreach $posts as $post}
 	<div class="post">
@@ -171,13 +171,13 @@ Let’s display the blog posts - we will edit the template like this:
 {/block}
 \--
 
-If you refresh your browser, you’ll see the list of your blog posts. The list isn't very fancy or colorful, so feel free to add some [shiny CSS |https://github.com/nette/tutorial-quickstart/blob/v2.4/www/css/style.css] to `www/css/style.css`.
+После обновления страницы в браузере вы увидите записи блога. Список выглядит не очень, попробуйте добавить [крутой CSS |https://github.com/nette/tutorial-quickstart/blob/v2.4/www/css/style.css] в `www/css/style.css`.
 
-The `{foreach}` macro iterates over all posts passed to the template in `$posts` variable and displays a piece of HTML code for each post. Just like a PHP code would.
+Макрос `{foreach}` выполняет итерацию по всем записям которые мы передали в `$posts`, и повторяет HTML код для каждого сообщения. Это работает так же как в PHP.
 
-The `|date:` thing is called a filter. Filters are used to format the output. This one transforms the given timestamp (e.g. `2013-04-12`) to a nice and readable date format (`April 12, 2013`). You can find more predefined "filters":latte:filters in the documentation or you can add your own if you need to.
+Строка `|date:` называется фильтром. Фильтры позволяют форматировать вывод. Она приобразует вывод временной метки (например `2013-04-12`) в удобный и читаемый формат (`April 12, 2013`). Вы можете использовать предопределенные "Фильтры":latte:filters или определить необходимые вам.
 
-One more thing. We can make the code a little bit shorter and thus simpler. We can replace *Latte macros* with *n: attributes* like this:
+И еще. Можно сделать код проще и короче. Замените *макрос Latte* на *n: атрибут* как здесь:
 
 /--html
 <div n:foreach="$posts as $post" class="post">
@@ -189,11 +189,11 @@ One more thing. We can make the code a little bit shorter and thus simpler. We c
 </div>
 \--
 
-The `n:foreach`, simply wraps the *div* with a *foreach* block (it does exactly the same thing as the previous block of code).
+`n:foreach` просто обертывает *div* в блок *foreach* (получается тоже самое, что и в предыдущем примере).
 
 
 
-Summary
-=======
+Итог
+====
 
-We have a very simple MySQL database with some blog posts in it. The application connects to the database and displays a simple list of the posts.
+У нас очень простая база данных MySQL с некоторыми записями для  блога. Приложение подключается к базе данных и отображает простой список записей.

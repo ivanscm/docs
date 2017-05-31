@@ -1,99 +1,99 @@
-Getting Started
-***************
+Начало работы
+*************
 
 .[perex]
-Meet Nette Framework and create your first application.
+Познакомтесь с фреймворком Nette и создайте свое первое приложение.
 
-The very first thing you should do is check if your server satisfies the [requirements|/requirements] of Nette Framework. It should most likely be fine, but just to be sure we won't start with broken environment.
+Самое первое что необходимо вам сделать, это проверить, подходит ли ваш сервер под требования фреймворка Nette. Вероятно все подходит, но мы должны убедится в том что все работает корректно.
 
-You can download Nette Framework [manually |www:download], but the recommended way of starting a new project is using [Composer |/composer]. If you don't know Composer, you should definitely start with that. It's really simple and useful tool, check out [their documentation |http://getcomposer.org/doc/].
+Вы можете скачать фреймворк Nette [вручную |www:download], но рекомендуется начать новый проект с использованием [Composer |/composer]. Если вы не знаете Composer, начните с него. Это действительно просто и полезный инструмент, посмотрите это [в его документации |http://getcomposer.org/doc/].
 
-With Composer, you can download and install the application skeleton known as Web Project including Nette Framework very easily. To do so, find your web root directory (e.g. `/var/www` or `C:\InetPub`) in your command line and execute the following command:
+С Composer вы можете легко скачать и установить каркас приложения, включающий в себя фреймворк Nette, называемый Web Project. Для этого перейдите в каталог вашего вебсервера (т.е. `/var/www` или `C:\InetPub`) и в командной строке выполните следующую команду:
 
 /--
 composer create-project nette/web-project nette-blog
 \--
 
-Web Project will be downloaded into `nette-blog` directory.
+Web Project будет скачан и распакован в каталог `nette-blog`.
 
 .[note]
-If you couldn't use Composer, [download |https://github.com/nette/web-project/archive/full.zip] and extract the archive and copy it to root directory of web server and rename to `nette-blog`. The entire framework is located in the `vendor` folder.
+Если вы не можете использовать Composer, [скачайте |https://github.com/nette/web-project/archive/full.zip] и распакуйте архив в корневую директорию веб-сервера и переименуйте каталог в `nette-blog`. Все необходимое для работы фреймворка находится в каталоге `vendor`.
 
-If you're developing on Mac OS X or Linux (or any other Unix based system), you need to configure write privileges to the web server.
+Если вы разрабатываете на  Mac OS X или Linux (или другая основаная на Unix система), необходимо настроить права на запись для веб-сервера.
 
 /--
 cd nette-blog && chmod -R a+rw temp log
 \--
 
 .[note]
-On some Linux systems (Fedora, CentOS, ...), SELinux may be enabled by default. You may need to update SELinux policies, or set paths of temp and log directories with correct SELinux security context.
+На некоторых Linux системах (Fedora, CentOS, ...), SELinux может быть включен по умолчанию. Возможно вам придется обновить политики SELinux, или настроить правильные контексты безопасности для каталогов temp и log.
 
-The Welcome Page
+Домашняя страница
 ====
 
-At this moment, the welcome page of the Web Project should be running. Try it by opening your browser and going to the following URL:
+В текущий момент можно запустить страницу приветствия. Откройте браузер и перейдите на следующий URL:
 
 /--
 http://localhost/nette-blog/www/
 \--
 
-and you should see the Nette Framework welcome page:
+и вы должны увидеть приветственную страницу фреймворка Nette:
 
 [* welcome-620.jpg *]
 
-The application works and you can now start making changes to it.
+Приложение работает и теперь вы можете начать вносить изменения в него.
 
 
-Web Project's Content
+Содержимое проекта
 ====
 
-Web Project has the following structure:
+Веб-проект имеет следующую структуру:
 
 /--pre
-<b>www/</b>                      ← web root directory
+<b>www/</b>                      ← корневая каталог веб-сервера
 └── <b>nette-blog/</b>
-    ├── <b>app/</b>              ← application directory
-    │   ├── <b>config/</b>       ← configuration files
-    │   ├── <b>presenters/</b>   ← presenter classes
-    │   │   └── <b>templates/</b>← templates
-    │   ├── <b>router/</b>       ← configuration of URL addresses
-    │   └── <b>bootstrap.php</b> ← boot file
-    ├── <b>log/</b>              ← here you can find error message logs
-    ├── <b>temp/</b>             ← place for temporary files (cache, sessions, etc.)
+    ├── <b>app/</b>              ← каталог приложения
+    │   ├── <b>config/</b>       ← файлы конфигурации
+    │   ├── <b>presenters/</b>   ← классы презенторов
+    │   │   └── <b>templates/</b>← шаблоны
+    │   ├── <b>router/</b>       ← конфигурация адресов URL
+    │   └── <b>bootstrap.php</b> ← загрузочный файл
+    ├── <b>log/</b>              ← здесь можно найти логи сообщений об ошибках
+    ├── <b>temp/</b>             ← содержит временные файлы (кеш, сессии, другое.)
     │
-    ├── <b>vendor/</b>           ← libraries for your application
-    │   └── <b>nette/</b>        ← like your favorite framework :-)
+    ├── <b>vendor/</b>           ← библиотеки для вашего приложения
+    │   └── <b>nette/</b>        ← вот ваш любимый фреймворк :-)
     │
-    └── <b>www/</b>              ← local web root - this is the only directory accessible from the web
+    └── <b>www/</b>              ← локальный каталог веб-сервера - только этот каталог доступен из вне
 \--
 
-Directory `www` is supposed to store images, JavaScript, CSS, and other publicly available files. This is the only directory directly accessible from the browser, so you can point the root directory of your web server here (you can configure it in Apache, but let’s do it later as it’s not important right now).
+В каталоге `www` предполагается хранить изображения, скрипты JavaScript, CSS и другие файлы для публичного доступа. This is the only directory directly accessible from the browser, so you can point the root directory of your web server here (you can configure it in Apache, but let’s do it later as it’s not important right now).
 
-The most important directory for you is `app/`. You can find `bootstrap.php` file there, which loads the framework and configures the application. It activates [autoloading |/auto-loading] and sets up the [debugger |tracy:] and [routes |/routing].
+Самый важный каталог для вас, это `app/`. Здесь вы можете найти файл `bootstrap.php` который загружает фреймворк и настраивает приложение. В нем активируется [автозагрузка |/auto-loading], настраивается [отладчик |tracy:] и [роутинг |/routing].
 
 
 
-Cleanup
-=======
+Чистка
+======
 
-The Web Project contains welcome page, which we can remove - feel free to delete the `app/presenters/templates/Homepage/default.latte` file and replace it with text "Hello world!".
+Проект содержит страницу приветствия, можете удалить файл `app/presenters/templates/Homepage/default.latte` или вставить текст "Hello world!".
 
 
 [* quick-hello.png *]
 
 
-Tracy (debugger)
+Tracy (отладчик)
 =====
 
-An extremely important tool for development is [a debugger called Tracy |tracy:]. Try to make some errors in your `app/presenters/HomepagePresenter.php` file (e.g. remove a letter from the word `class` in code) and see what happens. A red-screen page will pop up with understandable error description.
+Очень важным инструментом для разработки является [отладчик под названием Tracy |tracy:]. Попробуйте сделать ошибки в файле `app/presenters/HomepagePresenter.php` (например удалить ключевое слово `class`в коде) и посмотрите что произойдет. Появится красная страница с понятным описанием ошибки.
 
 [* debugger-620.png .(debugger screen) *]
 
-Tracy will significantly help you while hunting down errors. Also note the floating Debugger bar in the bottom right corner, which informs you about important runtime data.
+Tracy хорошо поможет избежать ошибок. Также обратите внимание на плавающую панель отладчика в нижнем правом углу, которая информирует вас о важных деталях во время выполнения приложения.
 
 [* quick-tracy-info.png *]
 
-In the production mode, Tracy is, of course, disabled and does not reveal any sensitive information. All error are saved into `log/` directory instead. Just try it out. In `app/bootstrap.php`, find the following piece of code, uncomment the line and change the method call parameter to `FALSE`, so it looks like this:
+В рабочем режиме Tracy отлючен и не раскрывает конфиденциальную информацию. Все ошибки сохраняются в каталог `log/`. Просто попробуйте. В файле `app/bootstrap.php`, найдите следующий фрагмент кода, раскомментируйте строку и измените параметр вызова метода на `FALSE`, что бы выглядело вот так:
 
 /--php
 // Enable Nette Debugger for error visualization & logging
@@ -101,12 +101,12 @@ $configurator->setDebugMode(FALSE);
 $configurator->enableTracy(__DIR__ . '/../log');
 \--
 
-After refreshing the web page, the red-screen page will be replaced with user-friendly message:
+После обновления страницы красная страница будет заменена удобным для пользователя сообщением:
 
 [* server-error-620.png .(error screen) *]
 
-Now look into the `log/` directory. You can find the error log there (in exception.log file) and also the page with error message (saved in an HTML file with name starting with `exception`).
+Теперь посмотрите в каталог `log/`. Вы найдете там журнал ошибок (в файле exception.log) а также страницу с сообщением об ошибке (сохраненное в файле HTML, с именем начинающимся с `exception`).
 
-Comment line `// $configurator->setDebugMode(FALSE);` again. Tracy automatically enables debug mode on `localhost` environment and disables it elsewhere.
+Закомментируйте строку `// $configurator->setDebugMode(FALSE);` снова. Tracy автоматически включает режим отладки для `localhost` и выключает в другой среде.
 
-Now, we can fix the bug and continue designing our application.
+Теперь вы можете исправить ошибку и продолжить разработку приложения.
