@@ -1,10 +1,10 @@
-Working with JSON - Nette\Utils\Json
-************************************
+Работа с JSON - Nette\Utils\Json
+********************************
 
 .[perex]
-[Nette\Utils\Json |api:] is a static class with useful functions you can use to work with JSON. It sanitizes errors in different PHP versions and throws exceptions on errors.
+[Nette\Utils\Json |api:] это статический класс содержащий методы для работы с JSON. Он позволяет обработать ошибки на разных версиях PHP и выдает исключения при ошибках.
 
-The following examples use these aliases:
+Примеры используют следующие пространства имен:
 
 /--php
 use Nette\Utils\Json;
@@ -15,20 +15,20 @@ use Nette\Utils\JsonException;
 encode($value, $options = 0)
 ============================
 
-Returns `$value` encoded into JSON. Accepts argument `Json::PRETTY` which formats JSON for better readability.
+Возращает закодированное в JSON `$value`. Принимает необязательный аргумент `Json::PRETTY` для форматирования JSON в читабельный вид.
 
 /--php
-Json::encode($value); // Returns $value encoded in JSON
-Json::encode($value, Json::PRETTY); // Returns formatted $value encoded in JSON
+Json::encode($value); // Возращает закодированное в JSON $value
+Json::encode($value, Json::PRETTY); // Возращает отформатированное закодированное в JSON $value
 \--
 
-Method `encode()` throws `JsonException` on error.
+Метод `encode()` бросает исключение `JsonException` при ошибке.
 
 /--php
 try {
 	Json::encode($value);
 } catch (JsonException $e) {
-	// Exception handling
+	// Обработка исключения
 }
 \--
 
@@ -36,19 +36,19 @@ try {
 decode($json, $options = 0)
 ===========================
 
-Converts given JSON either in object or in array. Accepts argument `Json::FORCE_ARRAY` which forces an array instead of an object as the return value.
+Преобразует JSON в object или array. Принимает необязательный аргумент `Json::FORCE_ARRAY` для принудительного возврата массива, вместо объекта.
 
 /--php
-Json::decode('{"variable": true}'); // Returns an object of stdClass with attribute $variable
-Json::decode('{"variable": true}', Json::FORCE_ARRAY); // Returns an array with key "variable" and value true
+Json::decode('{"variable": true}'); // Возвращает объект типа stdClass с атрибутами $variable
+Json::decode('{"variable": true}', Json::FORCE_ARRAY); // Возвращает массив с ключом "variable" и значением true
 \--
 
-Method `decode()` throws `JsonException` on error.
+Метод `decode()` бросает исключение `JsonException` при ошибке.
 
 /--php
 try {
 	Json::decode($value);
 } catch (JsonException $e) {
-	// Exception handling
+	// Обработка исключения
 }
 \--
