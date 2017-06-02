@@ -7,7 +7,7 @@
 
 /---div .[column navig]
 
-[* icon-welcome.png *] Руководство разработчика.{margin-top: 0}
+[* icon-welcome.png *] Быстрый старт.{margin-top: 0}
 -----------------------
 
 - [Введение в Nette |getting-started]
@@ -49,9 +49,9 @@
 
 .[#summary]
 - [Формы |forms]
-- [Шаблоны |latte:], [Макросы Latte |latte:macros] and [Фильтры |latte:filters]
+- [Шаблоны |latte:], [Макросы Latte |latte:macros] и [Фильтры |latte:filters]
 - [Приложение MVC и представители (presenters) |presenters]
-- [Конфигурация |configuring], [Внедрение зависимостей (DI) |dependency-injection], [Работа с зависимостями |di-usage] and [Расширение зависимостей |di-extensions]
+- [Конфигурация |configuring], [Внедрение зависимостей (DI) |dependency-injection], [Работа с зависимостями |di-usage] и [Расширение зависимостей |di-extensions]
 - [Компоненты и элементы управления |components]
 - [Роутинг |routing]
 - [Аутентификация и авторизация |access-control] и [пароли |passwords]
@@ -73,7 +73,7 @@
 - [Просмотр файлов на диске |finder]
 - [Атомарные операции |atomicity]
 - [Валидация |validators]
-- Утилиты для [Строки |strings], [массивы |arrays], [Элементы HTML |html-elements] и [ЧПУ |urls]
+- Утилиты для [Строк |strings], [массивы |arrays], [Элементы HTML |html-elements] и [ЧПУ |urls]
 - Инструменты: [Проверка кода |code-checker], [Composer]
 
 \---
