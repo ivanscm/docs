@@ -1,28 +1,28 @@
-Comments
-********
+Комментарии
+***********
 
-The blog has been deployed, we’ve written some very good blog posts and published them via Adminer. People are reading the blog and they’re very passionate about our ideas. We’re receiving many emails with praise each day. But what is all the praise for when we’ve got it only in the email, so no one else can read it? Wouldn’t it be better if people could comment directly on the blog so that everyone else could read how awesome we are?
+Блог был развернут, мы написали очень хорошие записи и опубликовали их через Adminer. Люди читаю блог, и они очень увлечены нашими идеями. Каждый день мы получаем много писем с отзывами. Но что за отзывы, если мы получаем их по электронной почте и никто не может их прочитать? Было бы лучше, если бы люди могли комментировать прям в блоге, а остальные могли читать эти комментарии?
 
-Let’s make all the articles commentable.
+Давайте сделаем все записи комментируемыми
 
 
-Creating a new Table
-====================
+Создание новой таблицы
+======================
 
-Fire up Adminer again and create a new table named `comments` with these columns:
+Откройте Adminer и создайте таблицу `comments` со следующими столбцами:
 
-- `id` int, check autoincrement (AI)
-- `post_id`, a foreign key that references the `posts` table
-- `name` varchar, length 255
-- `email` varchar, length 255
-- `content` text
-- `created_at` timestamp
+- `id` число (int), выберите автоинкремент (AI)
+- `post_id`, внешний ключ который ссылается на таблицу `posts`
+- `name` символы(varchar), длина 255
+- `email` символы(varchar), длина 255
+- `content` текст(text)
+- `created_at` временная метка(timestamp)
 
-It should look like this:
+Это должно выглядеть так:
 
 [* adminer-comments.png *]
 
-Don’t forget to use InnoDB table storage and hit Save.
+Не забудьте использовать табличное хранилище InnoDB и нажмите «Сохранить».
 
 /--SQL
 CREATE TABLE `comments` (
@@ -36,62 +36,62 @@ CREATE TABLE `comments` (
 ) ENGINE=InnoDB CHARSET=utf8;
 \--
 
-Form for Commenting
-===================
+Форма для комментариев
+======================
 
-First, we need to create a form, that will allow the users to comment on our page. Nette Framework has awesome support for forms. They can be configured in a presenter and rendered in a template.
+Первое, нам нужно создать форму, которая позволит пользователям комментировать наши записи. Nette Framework имеет огромную поддержку форм. Их можно настроить в Презентере и вывести в шаблоне.
 
-Nette Framework has a concept of *components*. A **component** is a reusable class or piece of code, that can be attached to another component. Even a presenter is a component. Each component is created using the component factory. So let’s define the comments form factory in `PostPresenter`.
+Nette Framework имеет концепцию *компонент*. **Компонент** представляет собой многократно используемый класс или фрагмент кода, который может быть присоединен к другому компоненту. Даже презентер является компонентом. Каждый компонент создается с использованием фабрики компонентов. Итак, давайте определим фабрику комментариев в `PostPresenter`.
 
 /--php
 	protected function createComponentCommentForm()
 	{
-		$form = new Form; // means Nette\Application\UI\Form
+		$form = new Form; // означает Nette\Application\UI\Form
 
-		$form->addText('name', 'Your name:')
+		$form->addText('name', 'Ваше имя:')
 			->setRequired();
 
-		$form->addEmail('email', 'Email:');
+		$form->addEmail('email', 'Эл. почта:');
 
-		$form->addTextArea('content', 'Comment:')
+		$form->addTextArea('content', 'Комментарий:')
 			->setRequired();
 
-		$form->addSubmit('send', 'Publish comment');
+		$form->addSubmit('send', 'Опубликовать комментарий');
 
 		return $form;
 	}
 \--
 
-Let’s explain it a little bit. The first line creates a new instance of `Form` component.
-The following methods are attaching HTML inputs into the form definition.
-`->addText` will render as `<input type=text name=name>`, with `<label>Your name:</label>`. As you might have already guessed right now, the `->addTextArea` attaches a `<textarea>` and `->addSubmit` adds an `<input type=submit>`.
-There are more methods like that, but this is all you have to know right now. You can [learn more in the documentation|/forms].
+Поясним немного. Первая строка создает новый экземпляр компонента `Form`.
+Следующие методы включают вхождение HTML в определение формы.
+`->addText` будет отображаться как `<input type=text name=name>`, с `<label>Ваше имя:</label>`. Как вы, наверное, уже догадались, `->addTextArea` добавляет `<textarea>` и `->addSubmit` добавляет `<input type=submit>`.
+Таких методов больше, но это все, что вам нужно знать сейчас. Вы можете [узнать больше в документации|/forms].
 
-Once the form component is defined in a presenter, we can render (display) it in a template. To do so, place the macro `{control}` at the end of the post detail template, in `app/presenters/templates/Post/show.latte`. Because the component's name is `commentForm` (it's derived from the name of the method `createComponentCommentForm`), the macro will look like this
+Когда компонент формы определен в презентере, мы можем отобразить его в шаблоне. Для этого разместите макрос `{control}` в конце шаблона записи в `app/presenters/templates/Post/show.latte`. Поскольку имя компонента `commentForm` (оно получено из имени метода `createComponentCommentForm`), макрос будет выглядеть следующим образом
 
 /--html
 ...
-<h2>Post new comment</h2>
+<h2>Оставить комментарий</h2>
 
 {control commentForm}
 ...
 \--
 
-Now if you check out the detail of some post, there will be a new form for posting comments.
+Теперь, если вы просмотрите страницу какой-то либо записи, на ней появится форма для размещения комментариев.
 
 
-Saving to Database
-==================
+Сохранение в базу данных
+========================
 
-Have you tried to submit some data? You might have noticed, that the form is not performing any action. It’s just there, looking cool and doing nothing. We have to attach a callback method to it, that will save the submitted data.
+Вы пытались отправить некоторые данные? Вы заметили, что форма не выполняет никаких действий. Она просто есть на странице, выглядит круто и ничего не делает. Мы должны добавить к ней метод обратного вызова, который сохранит отправленные данные.
 
-Place the following line before the `return` line in the component factory for the `commentForm`:
+Добавте следущую строку перед `return` в фабрике компонента `commentForm`:
 
 /--php
 $form->onSuccess[] = [$this, 'commentFormSucceeded'];
 \--
 
-It means "after the form is successfully submitted, call the method `commentFormSucceeded` of the current presenter". This method does not exist yet, so let’s create it.
+Это означает "как форма будет отправлена, вызвать метод `commentFormSucceeded` у текущего презентера". Этого метода еще не существует, поэтому давайте создадим его.
 
 /--php
 	public function commentFormSucceeded($form, $values)
@@ -105,34 +105,34 @@ It means "after the form is successfully submitted, call the method `commentForm
 			'content' => $values->content,
 		]);
 
-		$this->flashMessage('Thank you for your comment', 'success');
+		$this->flashMessage('Спасибо за ваш комментарий', 'success');
 		$this->redirect('this');
 	}
 \--
 
-You should place it right after the `commentForm` component factory.
+Вы должны разместить его после фабрики компонента `commentForm`.
 
-The new method has one argument which is the instance of the form being submitted, created by the component factory. We receive submitted values in `$values`. And then we insert the data into the database table `comments`.
+Новый метод имеет один аргумент, который представляет собой экземпляр отправленной формы, созданый фабрикой компонента. Отправленные данные мы получаем в `$values`. И затем вставляем в базу данных, в таблицу `comments`.
 
-There are two more method calls to explain. The redirect literally redirects to the current page. You should do that every time when the form is submitted, valid, and the callback operation did what it should have done. Also, when you redirect the page after submitting the form, you won’t see the well known `Would you like to submit the post data again?` message that you can sometimes see in the browser. (In general, after submitting a form by `POST` method, you should always redirect the user to a `GET` action.)
+Объясним еще два метода. `redirect` буквально перенаправляет на текущую страницу. Вы должны делать это каждый раз когда форма отправлена, валидна, и в функции обратного вызова было выполнено то, что должно было быть выполнено. Кроме того, когда вы перенаправляете страницу после отправки формы, вы не увидите хорошо известного сообщения `Хотите ли вы отправить данные сообщения снова?`, которое иногда можно увидеть в браузере. (В общем, после отправки формы методом `POST` вы всегда должны перенаправлять пользователя на действие `GET`.)
 
-The `flashMessage` is for informing the user about the result of some operation. Because we’re redirecting, the message cannot be directly passed to template and rendered. So there is this method, that will store it and make it available on the next page load. The flash messages are rendered in the default `app/presenters/templates/@layout.latte` file, and it looks like this
+`flashMessage` предназначен для информирования пользователя о результате какой-либо операции. Поскольку мы перенаправляем, сообщение нельзя напрямую передать шаблону и визуализировать. Для этого и существует этот метод, который сохранит сообщение и сделает доступным при загрузке следующей страницы. Флэш-сообщения отображаются в файле `app/presenters/templates/@layout.latte`, и это выглядит так
 
 /--html
 <div n:foreach="$flashes as $flash" n:class="flash, $flash->type">{$flash->message}</div>
 \--
 
-As we already know, they are passed automatically to the template, so you don’t have to think about it too much, it just works. For more details [check the documentation |/presenters#toc-flash-messages].
+Как мы уже знаем, они автоматически передаются в шаблон, так что вам не придется думать об этом слишком много, это просто работает. Для получения более подробной информации [обратитесь к документации |/presenters#toc-flash-messages].
 
 
-Rendering the Comments
-======================
+Вывод комментариев
+==================
 
-This is one of the things you will just love. Nette\Database has this cool feature named *Selection API*. Do you remember that we’ve created the tables as InnoDB? Adminer has created the so called [foreign keys |http://dev.mysql.com/doc/refman/5.5/en/innodb-foreign-key-constraints.html] that will save us a ton of work.
+Это одна из вещей, которую вы просто полюбите. У Nette\Database есть крутая особенность под названием *Selection API*. Вы помните, что мы создали таблицы как InnoDB? Adminer создал так называемые [внешние ключи |http://dev.mysql.com/doc/refman/5.5/en/innodb-foreign-key-constraints.html], которые спасут нас от массы работы.
 
-Nette\Database uses the foreign keys to resolve relations between tables, and knowing the relations, it can automatically create queries for you.
+Nette\Database использует внешние ключи для связи между таблицами и зная связи, он может автоматически создавать запросы.
 
-As you may remember, we’ve passed the `$post` variable to the template in `PostPresenter::renderShow()` and now we want to iterate through all the comments that have the column `post_id` equal to our `$post->id`. You can do it by calling `$post->related('comments')`. It’s that simple. Look at the resulting code.
+Как вы помните, мы передали переменную `$post` в `PostPresenter::renderShow()` в шаблон и теперь мы хотим получить все комментарии, у которых столбец `post_id` равен `$post->id`. Вы можете сделать это, вызвав `$post->related('comments')`. Это так просто. Посмотрите на полученный код.
 
 /--php
 	public function renderShow($postId)
@@ -143,10 +143,10 @@ As you may remember, we’ve passed the `$post` variable to the template in `Pos
 	}
 \--
 
-And the template:
+И шаблон:
 
 /--html
-<h2>Comments</h2>
+<h2>Комментарии</h2>
 
 <div class="comments">
 	{foreach $comments as $comment}
@@ -157,9 +157,9 @@ And the template:
 
 \--
 
-Notice the special `n:tag-if` attribute. You already know how `n: attributes` work. Well, If you prepend the attribute with `tag-`, it will only wrap around the tags, not their content. This allows you to make the commenter's name into a link if they provided their email. These two lines are identical in results:
+Обратите внимание на специальный атрибут `n:tag-if`. Вы уже знаете, как работают `n: attributes`. Ну, если вы добавите атрибут с `tag-`, он будет обтекать только теги, а не их содержимое. Это позволяет сделать имя комментатора ссылкой, если он оставил адрес электронной почты. Эти две строки идентичны в результатах:
 
 /--html
-<strong n:tag-if="$important"> Hello there! </strong>
-{if $important}<strong>{/if} Hello there! {if $important}</strong>{/if}
+<strong n:tag-if="$important"> Привет! </strong>
+{if $important}<strong>{/if} Привет! {if $important}</strong>{/if}
 \--
