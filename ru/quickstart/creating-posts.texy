@@ -1,71 +1,71 @@
-Creating and Editing Posts
-**************************
+Создание и редактирование записей
+*********************************
 
-What a great time. We have a super cool new blog, people are arguing in comments and we have finally some time for more programming. Though we like Adminer, it is not that comfortable to write blog posts in it. Perhaps it's the right time to add a simple form for adding new posts directly from our app. Let’s do it.
+Какое замечательно. У вас есть очень крутой блог, люди спорят в комментариях, и вы нашли больше времени для программирования. Хотя нам нравится Adminer, не так уж удобно писать в нем записи в блогах. Пришло время добавить простую форму для добавления новых сообщений непосредственно из нашего приложения. Давайте сделаем это.
 
-Let’s start by designing the UI:
+Давайте начнем с проектирования пользовательского интерфейса:
 
-1. On the homepage, let’s add a "Write new post" link.
-2. It will show a form with title and textarea for content.
-3. When you click a Save button, it’ll save the blog post.
+1. На домашней странице добавим ссылку «Написать новое сообщение».
+2. По нажатию появится форма с заголовком и текстовым полем для контента.
+3. Когда вы нажмете кнопку «Сохранить», сообщение сохраниться.
 
-Later we’ll also add authentication and allow only logged-in users to add new posts. But let’s do that later. What code will we need to write to make it work?
+Позже мы также добавим аутентификацию и разрешим только зарегистрированным пользователям добавлять новые записи. Но давайте сделаем это позже. Какой код нам нужно написать, чтобы он работал?
 
-1. Add the link to homepage template (`app/presenters/templates/Homepage/default.latte`)
-2. Create a new page (template) which will show the form
-3. Define the form for adding a new post
-4. Define handler which will be executed when the form gets submitted, which will save the post.
+1. Добавить ссылку в шаблон главной страницы (`app/presenters/templates/Homepage/default.latte`)
+2. Создайте новую страницу (шаблон), которая отобразит форму
+3. Определить форму добавления нового сообщения
+4. Определите обработчик, который будет выполнен, когда форма будет отправлена, чтобы сохранить сообщение.
 
 
-Link for New Posts
+Ссылка для новых записей
 ===
 
-You should already know how to add a new link to the homepage. So try it yourself.
+Вы уже должны знать, как добавить новую ссылку. Так что попробуйте сами.
 
-If you’re not sure, add this code somewhere to `app/presenters/templates/Homepage/default.latte`:
+Если вы не уверены, добавьте этот код где-нибудь в `app/presenters/templates/Homepage/default.latte`:
 
 /---html
-<a n:href="Post:create">Write new post</a>
+<a n:href="Post:create">Новая запись</a>
 \---
 
 
-Page for Creating a New Post
+Страница для создания новой записи
 ===
 
-The link we've just created points to `PostPresenter` and its action `create`. We can add a new method `renderCreate`, but actually it is not necessary. We don’t need to fetch any data from database and put it into the template, so the method would be empty. In such case, it doesn’t need to exist at all.
+Ссылка, которую мы только что создали, указывает на `PostPresenter` и его действие `create`. Мы можем добавить новый метод `renderCreate`, но на самом деле это не является необходимым. Нам не нужно извлекать данные из базы данных и помещать их в шаблон, поэтому метод будет пустым. В таком случае он вообще может не существовать.
 
 .[note]
-If you want, you can have the empty method there; perhaps it’ll have some code later. It’s up to you.
+Если вы хотите, у вас может быть пустой метод; Возможно, у него будет некоторый код позже. Это зависит от вас.
 
-Let’s just create the template (`app/presenters/templates/Post/create.latte`):
+Давайте просто создадим шаблон (`app/presenters/templates/Post/create.latte`):
 
 /---html
 {block content}
-<h1>New post</h1>
+<h1>Новая запись</h1>
 
 {control postForm}
 \--
 
-Everything should be obvious by now. The last line tries to render the form which we are about to create.
+Сейчас все очевидно. Последняя строка для отображения формы, которую мы собираемся создать.
 
 
-Form for Saving Posts
+Форма для сохранения записей
 ===
 
-Forms and components have been already covered when we were adding support for comments. If you're confused about the topic, go checkout [how forms and components work |comments#toc-form-for-commenting] again, we'll wait here ;)
+Мы говорили уже про формы и компоненты когда добавляли поддержку комментариев. Если вы запутались в этой теме, посмотрите [как работают компоненты и формы |comments#toc-form-for-commenting], затем вернемся обратно ;)
 
-Now add this method to the `PostPresenter`:
+Теперь добавьте этот метод в `PostPresenter`:
 
 /---php
 	protected function createComponentPostForm()
 	{
 		$form = new Form;
-		$form->addText('title', 'Title:')
+		$form->addText('title', 'Заголовок:')
 			->setRequired();
-		$form->addTextArea('content', 'Content:')
+		$form->addTextArea('content', 'Содержимое:')
 			->setRequired();
 
-		$form->addSubmit('send', 'Save and publish');
+		$form->addSubmit('send', 'Сохранить и опубликовать');
 		$form->onSuccess[] = [$this, 'postFormSucceeded'];
 
 		return $form;
@@ -73,54 +73,54 @@ Now add this method to the `PostPresenter`:
 \---
 
 
-Saving new Post from Form
+Сохранение новой записи из формы
 ===
 
-Continue by adding a handler method.
+Продолжайте, добавив метод обработчика.
 
 /---php
 	public function postFormSucceeded($form, $values)
 	{
 		$post = $this->database->table('posts')->insert($values);
 
-		$this->flashMessage("Post was published", 'success');
+		$this->flashMessage("Запись опубликована", 'success');
 		$this->redirect('show', $post->id);
 	}
 \---
 
-Just a quick explanation: it fetches the values from the form, inserts them into the database, creates a message for the user that the post was saved successfully, and redirects to the page where that post is published, so that you can see how it looks like.
+Краткое объяснение: извлекаются значения из формы, вставляются в базу данных, создается сообщение для пользователя о том, что запись была успешно сохранена, и перенаправляется на страницу, на которой публикуется эта публикация, чтобы вы могли видеть, как она выглядит.
 
 
-Editing Posts
+Редактирование записей
 ===
 
-Let’s also add the capability to edit existing posts. It shall be pretty simple - we already have `postForm` and we can use it for editing as well. We’ll add a new `edit` page and update the form handler, which will be able either to add a new post (as it does now), or to edit existing ones.
+Давайте также добавим возможность редактировать существующие записи. Это довольно просто - у нас уже есть `postForm`, и мы также можем использовать его для редактирования. Мы добавим новую страницу `edit` и обновим обработчик формы, который сможет либо добавить новую запись (как сейчас), либо изменить существующую.
 
-Add the method to the `PostPresenter`:
+Добавьте метод в `PostPresenter`:
 
 /---php
 	public function actionEdit($postId)
 	{
 		$post = $this->database->table('posts')->get($postId);
 		if (!$post) {
-			$this->error('Post not found');
+			$this->error('Запись не найдена');
 		}
 		$this['postForm']->setDefaults($post->toArray());
 	}
 \---
 
-Notice that the method is called `actionEdit` (and not `renderEdit`, as you may have expected). Render methods are used for passing the data into templates. Actions, on the other hand, may be doing a lot more, they should check if the page can be displayed by the current visitor or user and they should be doing most of the heavy work, that doesn't belong to form handlers. Passing data into the template would of course also work in action methods, but it's recommended not to do it, because of separating responsibilities. Your code is simply more synoptic when you split the code into render and action methods.
+Обратите внимание, что этот метод называется `actionEdit` (а не `renderEdit`, как вы могли ожидать). Методы Render используются для передачи данных в шаблон. Действия, с другой стороны, могут делать гораздо больше, они должны проверить, если страница может отображаться с помощью текущего посетителя или пользователя, и они должны делать большую часть тяжелой работы, которая не принадлежит формировать обработчик. Разумеется, передача данных в шаблон также будет работать в методах действий, но рекомендуется не делать этого из-за разделения обязанностей. Ваш код просто более синоптический, когда вы разделяете код на методы визуализации и действия.
 
-Now create the template (`app/presenters/templates/Post/edit.latte`):
+Теперь создадим шаблон (`app/presenters/templates/Post/edit.latte`):
 
 /---html
 {block content}
-<h1>Edit post</h1>
+<h1>Изменить запись</h1>
 
 {control postForm}
 \---
 
-Let’s also extend the form handler:
+Давайте также расширим обработчик формы:
 
 /---php
 	public function postFormSucceeded($form, $values)
@@ -134,21 +134,21 @@ Let’s also extend the form handler:
 			$post = $this->database->table('posts')->insert($values);
 		}
 
-		$this->flashMessage('Post was published', 'success');
+		$this->flashMessage('Запись опубликована', 'success');
 		$this->redirect('show', $post->id);
 	}
 \---
 
-When `postId` parameter is provided, it means that a post is being edited. In such case we’ll check that the post really exists and if so, we’ll update it in the database. If the `postId` is not provided, it means that a new post shall be added.
+Когда передается параметр `postId`, значит запись редактируется. В этом случае мы будем проверять, что запись действительно существует, и если это так, мы обновим ее в базе данных. Если параметр `postId` не передан, значит нужно добавить новую запись.
 
-But where does the `postId` come from? It is the parameter passed to `actionEdit` method. You can now add a link to the `app/presenters/templates/Post/show.latte` template:
+Но откуда взялся параметр `postId`? Это параметр, передаваемый методу `actionEdit`. Добавьте ссылку в шаблоне `app/presenters/templates/Post/show.latte`:
 
 /---html
-<a n:href="edit $post->id">Edit this post</a>
+<a n:href="edit $post->id">Изменить эту запись</a>
 \---
 
 
-Summary
-=======
+Итоги
+=====
 
-The blog is working, people are commenting rapidly and we no longer rely on Adminer for adding new posts. It is fully independent and even normal people can post there. But wait, that’s probably not ok, that anyone, I mean really anyone on the Internet, can post on our blog. Some form of authentication is required, so that only logged-in users would be able to post. We'll add that in the next chapter.
+Блог работает, люди быстро комментируют, и мы больше не используем Adminer для добавления новых записей. Он полностью независим, и даже обычные люди могут размещать записи в нем. Но подождите, наверное, это не нормально, что любой, я имею в виду, действительно любого в Интернете, может опубликовать запись в вашем блоге. Требуется некоторая форма проверки подлинности, чтобы можно было публиковать только зарегистрированным пользователям. Мы добавим ее в следующей главе.
